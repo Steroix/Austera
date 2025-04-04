@@ -1,6 +1,14 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, PermissionsBitField, ChannelType, REST, Routes } = require('discord.js');
+
+// .env dosyasından token al
 const BOT_TOKEN = process.env.BOT_TOKEN;
+
+if (!BOT_TOKEN) {
+    console.error("BOT_TOKEN .env dosyasında tanımlı değil!");
+    process.exit(1);
+}
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds, // For guild-related events
@@ -10,8 +18,8 @@ const client = new Client({
 });
 
 const clientId = '1357752438106624061'; // Botunuzun Client ID'si
-const guildId = '859939115877531678'; // Sunucu ID'si
-const ownerId = '859939115877531678'; // Bot sahibinin Discord kullanıcı ID'si
+const guildId = '1357844405490290688'; // Sunucu ID'si
+const ownerId = '268501021037166592'; // Bot sahibinin Discord kullanıcı ID'si
 
 const commands = [
     {
@@ -21,10 +29,15 @@ const commands = [
     {
         name: 'odasil',
         description: 'Bulunduğunuz özel odayı siler.',
+    },
+    {
+        name: 'easteregg',
+        description: 'Gizli bir easter egg komutu.',
     }
 ];
 
-// Bot token'ını güvenli bir şekilde saklayın (örneğin, bir .env dosyasında)
+// Kullanıcıların özel odalarını takip etmek için bir Map
+const userPrivateRooms = new Map();
 
 const rest = new REST({ version: '10' }).setToken(BOT_TOKEN);
 
@@ -54,6 +67,11 @@ client.on('interactionCreate', async (interaction) => {
         const guild = interaction.guild;
         const author = interaction.user;
 
+        // Kullanıcının zaten bir özel odası var mı kontrol et
+        if (userPrivateRooms.has(author.id)) {
+            return interaction.reply("Zaten bir özel odanız var!");
+        }
+
         // Create a private channel visible only to the user and admins
         const overwrites = [
             {
@@ -71,7 +89,7 @@ client.on('interactionCreate', async (interaction) => {
         ];
 
         // Add "Admin" roles (adjust role names as needed)
-        const adminRoles = ["Admin", "Moderator", "Yönetici", "Botates"]; // Replace with your server's admin roles
+        const adminRoles = ["Admin", "Moderator", "Yönetici", "admin"]; // Replace with your server's admin roles
         guild.roles.cache.forEach(role => {
             if (adminRoles.includes(role.name)) {
                 overwrites.push({
@@ -90,6 +108,9 @@ client.on('interactionCreate', async (interaction) => {
                 reason: `Private channel for ${author.username}`
             });
 
+            // Kullanıcının özel odasını kaydet
+            userPrivateRooms.set(author.id, channel.id);
+
             await interaction.reply(`${author}, özel odan oluşturuldu: ${channel}`);
         } catch (error) {
             console.error('Kanal oluşturulurken bir hata oluştu:', error);
@@ -105,22 +126,40 @@ client.on('interactionCreate', async (interaction) => {
             return interaction.reply("Bu komut yalnızca özel odalarda kullanılabilir.");
         }
 
+        // Kullanıcının yetkili olup olmadığını kontrol et
+        const member = interaction.member; // Kullanıcıyı doğrudan interaction'dan al
+        const adminRoles = ["Admin", "Moderator", "Yönetici", "admin"]; // Yetkili rollerin isimleri
+        const isAuthorized = member.roles.cache.some(role => adminRoles.includes(role.name));
+
+        if (!isAuthorized) {
+            await interaction.reply("Bu komutu yalnızca yetkililer kullanabilir.");
+            return;
+        }
+
+        await interaction.reply("Oda silme işlemi başlatılıyor...");
+
         try {
-            await channel.delete("Kullanıcı tarafından silindi.");
+            // Kullanıcının özel odasını Map'ten kaldır
+            userPrivateRooms.forEach((value, key) => {
+                if (value === channel.id) {
+                    userPrivateRooms.delete(key);
+                }
+            });
+
+            await channel.delete("Yetkili tarafından silindi.");
             console.log(`Kanal silindi: ${channel.name}`);
         } catch (error) {
             console.error('Kanal silinirken bir hata oluştu:', error);
-            interaction.reply("Kanal silinirken bir hata oluştu.");
+            interaction.followUp("Kanal silinirken bir hata oluştu.");
         }
     }
 
-    if (commandName === 'shutdown') {
-        if (interaction.user.id !== ownerId) {
-            return interaction.reply("Bu komutu yalnızca bot sahibi kullanabilir.");
+    if (commandName === 'easteregg') {
+        const specialUserId = '268501021037166592'|| '320325708154929155'; // Özel kullanıcı ID'si
+        if (interaction.user.id === specialUserId) {
+            return interaction.reply("🎉 Tebrikler! Gizli bir easter egg buldunuz! 🎉");
         }
-
-        await interaction.reply("Bot kapatılıyor...");
-        client.destroy();
+        return interaction.reply("Bu komut bir şey yapmıyor gibi görünüyor... 🤔");
     }
 });
 
