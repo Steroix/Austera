@@ -18,7 +18,7 @@ const client = new Client({
 });
 
 const clientId = '1357752438106624061'; // Botunuzun Client ID'si
-const guildId = '1357844405490290688'; // Sunucu ID'si
+const guildId = '1176966070612004896'; // Sunucu ID'si
 const ownerId = '268501021037166592'; // Bot sahibinin Discord kullanıcı ID'si
 
 const commands = [
