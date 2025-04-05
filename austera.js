@@ -78,14 +78,18 @@ client.on('interactionCreate', async (interaction) => {
     if (commandName === 'ozeloda') {
         const guild = interaction.guild;
         const author = interaction.user;
+        const member = interaction.member;
 
         // Kullanıcının zaten bir özel odası var mı kontrol et
         if (userPrivateRooms.has(author.id)) {
             return interaction.reply("Zaten bir özel odanız var!");
         }
 
-        // Sunucu adını kanal ismine uygun hale getirmek için düzenle
-        const sanitizedGuildName = guild.name.toLowerCase().replace(/[^a-z0-9]/g, '-'); // Sadece küçük harf ve tire bırak
+        // Kullanıcının sunucudaki takma adını al, yoksa kullanıcı adını kullan
+        const nickname = member.nickname || author.username;
+
+        // Takma adı kanal ismine uygun hale getirmek için düzenle
+        const sanitizedNickname = nickname.toLowerCase().replace(/[^a-z0-9]/g, '-'); // Sadece küçük harf ve tire bırak
 
         // Create a private channel visible only to the user and admins
         const overwrites = [
@@ -117,7 +121,7 @@ client.on('interactionCreate', async (interaction) => {
         // Create the channel
         try {
             const channel = await guild.channels.create({
-                name: `özel-${sanitizedGuildName}`,
+                name: `özel-${sanitizedNickname}`,
                 type: ChannelType.GuildText,
                 permissionOverwrites: overwrites,
                 reason: `Private channel for ${author.username}`
