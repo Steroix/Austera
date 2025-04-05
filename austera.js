@@ -18,7 +18,6 @@ const client = new Client({
 });
 
 const clientId = '1357752438106624061'; // Botunuzun Client ID'si
-const guildId = '1176966070612004896'; // Sunucu ID'si
 const ownerId = '268501021037166592'; // Bot sahibinin Discord kullanıcı ID'si
 
 const commands = [
@@ -54,6 +53,19 @@ const rest = new REST({ version: '10' }).setToken(BOT_TOKEN);
     }
 })();
 
+(async () => {
+    try {
+        console.log('Global slash komutları kaydediliyor...');
+        await rest.put(
+            Routes.applicationCommands(clientId), // Global komutlar için Routes.applicationCommands kullanılır
+            { body: commands }
+        );
+        console.log('Global slash komutları başarıyla kaydedildi.');
+    } catch (error) {
+        console.error('Slash komutları kaydedilirken bir hata oluştu:', error);
+    }
+})();
+
 client.once('ready', () => {
     console.log(`${client.user.tag} is ready!`);
 });
@@ -71,6 +83,9 @@ client.on('interactionCreate', async (interaction) => {
         if (userPrivateRooms.has(author.id)) {
             return interaction.reply("Zaten bir özel odanız var!");
         }
+
+        // Sunucu adını kanal ismine uygun hale getirmek için düzenle
+        const sanitizedGuildName = guild.name.toLowerCase().replace(/[^a-z0-9]/g, '-'); // Sadece küçük harf ve tire bırak
 
         // Create a private channel visible only to the user and admins
         const overwrites = [
@@ -102,7 +117,7 @@ client.on('interactionCreate', async (interaction) => {
         // Create the channel
         try {
             const channel = await guild.channels.create({
-                name: `özel-${author.username}`,
+                name: `özel-${sanitizedGuildName}`,
                 type: ChannelType.GuildText,
                 permissionOverwrites: overwrites,
                 reason: `Private channel for ${author.username}`
