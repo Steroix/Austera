@@ -98,12 +98,20 @@ client.on('interactionCreate', async (interaction) => {
                 deny: [PermissionsBitField.Flags.ViewChannel]
             },
             {
-                id: author.id, // User can see
-                allow: [PermissionsBitField.Flags.ViewChannel]
+                id: author.id, // User can see and upload files
+                allow: [
+                    PermissionsBitField.Flags.ViewChannel,
+                    PermissionsBitField.Flags.SendMessages,
+                    PermissionsBitField.Flags.AttachFiles // Fotoğraf yükleme izni
+                ]
             },
             {
-                id: client.user.id, // Bot can see
-                allow: [PermissionsBitField.Flags.ViewChannel]
+                id: client.user.id, // Bot can see and manage the channel
+                allow: [
+                    PermissionsBitField.Flags.ViewChannel,
+                    PermissionsBitField.Flags.SendMessages,
+                    PermissionsBitField.Flags.AttachFiles
+                ]
             }
         ];
 
@@ -113,7 +121,11 @@ client.on('interactionCreate', async (interaction) => {
             if (adminRoles.includes(role.name)) {
                 overwrites.push({
                     id: role.id,
-                    allow: [PermissionsBitField.Flags.ViewChannel]
+                    allow: [
+                        PermissionsBitField.Flags.ViewChannel,
+                        PermissionsBitField.Flags.SendMessages,
+                        PermissionsBitField.Flags.AttachFiles // Fotoğraf yükleme izni
+                    ]
                 });
             }
         });
